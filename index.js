@@ -3,7 +3,10 @@ const app = express(); // jogando todas as funções para a variavel app e execu
 const bodyParser = require('body-parser'); // solicita o body parser
 
 // Incluindo a conexão ao banco
-const connection = require('./database/database.js');
+const connection = require('./database/database');
+
+// Chama o Model Pergunta
+const Pergunta = require('./database/Pergunta');
 
 // Testando a conexão
 connection
@@ -23,7 +26,16 @@ app.use(bodyParser.json());
 
 // Rotas
 app.get('/', (req, res) => { // Criando a primeira rota
-    res.render('index'); // Renderiza a página index do ejs
+
+    Pergunta.findAll({raw: true, order: [
+        ['id', 'DESC']
+    ]}).then(perguntas => { // Faz uma pergunta crua na tabela pergunta
+        res.render('index', { // Renderiza a página index do ejs
+            perguntas: perguntas
+        }); 
+    });
+
+    
 });
 
 app.get('/perguntar', (req, res) => {
@@ -34,7 +46,13 @@ app.post('/salvarpergunta', (req,res) =>{
     var titulo = req.body.titulo; // Pega os dados do front end 
     var descricao = req.body.descricao;
 
-    res.send('Formulário Recebido! Título: ' + titulo + ' Descrição: '+ descricao);
+
+    Pergunta.create({ //insert do BD
+        titulo: titulo,
+        descricao: descricao,
+    }).then(() =>{ // Verifica se a inserção ocorreu com sucesso
+        res.redirect('/');
+    });
 });
 
 app.listen( 8080, () => { // Iniciando servidor express
